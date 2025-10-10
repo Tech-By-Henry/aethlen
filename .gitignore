@@ -1,0 +1,14 @@
+# Rust
+/target
+**/target
+
+# Editors/OS
+.vscode/
+.idea/
+.DS_Store
+
+# Env/other
+.env
+.env.*
+*.log
+
