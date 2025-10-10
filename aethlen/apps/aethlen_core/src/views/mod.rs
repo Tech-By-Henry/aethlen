@@ -1,2 +1,2 @@
-pub mod iryx_health;
-pub mod iryx_echo;
+pub mod aethlen_health;
+pub mod aethlen_echo;

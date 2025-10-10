@@ -1,5 +1,5 @@
 use axum::{Router, routing::post};
-use crate::views::iryx_rewrite::rewrite;
+use crate::views::aethlen_rewrite::rewrite;
 
 pub fn router() -> Router {
     Router::new()

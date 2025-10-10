@@ -1,14 +1,16 @@
 # Rust
 /target
-**/target
+**/target/
 
 # Editors/OS
 .vscode/
 .idea/
 .DS_Store
 
-# Env/other
+# Dotenv
 .env
 .env.*
-*.log
-
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example

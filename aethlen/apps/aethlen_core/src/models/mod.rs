@@ -1,3 +1,3 @@
 // SeaORM entities will live here later, e.g.:
-// pub mod iryx_document;
-// pub mod iryx_chunk;
+// pub mod aethlen_document;
+// pub mod aethlen_chunk;

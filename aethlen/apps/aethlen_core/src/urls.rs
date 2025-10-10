@@ -1,5 +1,5 @@
 use axum::{Router, routing::{get, post}};
-use crate::views::{iryx_health::health, iryx_echo::echo};
+use crate::views::{aethlen_health::health, aethlen_echo::echo};
 
 pub fn router() -> Router {
     Router::new()

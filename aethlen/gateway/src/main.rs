@@ -32,8 +32,8 @@ async fn main() -> anyhow::Result<()> {
     // Mount app routers (like including app urls.py)
     let app = Router::new()
         .route("/", get(|| async { "aethlen gateway alive" }))
-        .nest("/api/core", iryx_core::urls::router())
-        .nest("/api/ai",   iryx_ai::urls::router())
+        .nest("/api/core", aethlen_core::urls::router())
+        .nest("/api/ai",   aethlen_ai::urls::router())
         .layer(stack);
 
     let addr: SocketAddr = std::env::var("BIND_ADDR")

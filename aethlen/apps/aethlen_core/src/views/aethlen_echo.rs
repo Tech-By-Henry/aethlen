@@ -1,6 +1,6 @@
 use axum::Json;
-use crate::serializers::iryx_echo::{IryxEchoIn, IryxEchoOut};
+use crate::serializers::aethlen_echo::{AethlenEchoIn, AethlenEchoOut};
 
-pub async fn echo(Json(inp): Json<IryxEchoIn>) -> Json<IryxEchoOut> {
-    Json(IryxEchoOut { echoed: inp.message })
+pub async fn echo(Json(inp): Json<AethlenEchoIn>) -> Json<AethlenEchoOut> {
+    Json(AethlenEchoOut { echoed: inp.message })
 }

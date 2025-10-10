@@ -8,5 +8,5 @@ pub struct Health {  // <-- make it public
 }
 
 pub async fn health() -> Json<Health> {
-    Json(Health { status: "ok", app: "iryx_core" })
+    Json(Health { status: "ok", app: "aethlen_core" })
 }

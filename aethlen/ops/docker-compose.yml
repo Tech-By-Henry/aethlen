@@ -1,0 +1,12 @@
+services:
+  db:
+    image: ankane/pgvector:latest
+    ports: ["5432:5432"]
+    environment:
+      POSTGRES_USER: aethlen
+      POSTGRES_PASSWORD: aethlen
+      POSTGRES_DB: aethlen
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+volumes:
+  dbdata:
