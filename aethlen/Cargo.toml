@@ -1,8 +1,8 @@
 [workspace]
 members = [
   "gateway",
-  "apps/iryx_core",
-  "apps/iryx_ai",
+  "apps/aethlen_core",
+  "apps/aethlen_ai",
   "migration",
 ]
 resolver = "2"

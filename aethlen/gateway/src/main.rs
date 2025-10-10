@@ -31,7 +31,7 @@ async fn main() -> anyhow::Result<()> {
 
     // Mount app routers (like including app urls.py)
     let app = Router::new()
-        .route("/", get(|| async { "iryx gateway alive" }))
+        .route("/", get(|| async { "aethlen gateway alive" }))
         .nest("/api/core", iryx_core::urls::router())
         .nest("/api/ai",   iryx_ai::urls::router())
         .layer(stack);
@@ -39,7 +39,7 @@ async fn main() -> anyhow::Result<()> {
     let addr: SocketAddr = std::env::var("BIND_ADDR")
         .unwrap_or_else(|_| "0.0.0.0:8080".into())
         .parse()?;
-    tracing::info!(%addr, "IRYX listening");
+    tracing::info!(%addr, "AETHLEN listening");
 
     // Axum 0.7 style
     let listener = tokio::net::TcpListener::bind(addr).await?;

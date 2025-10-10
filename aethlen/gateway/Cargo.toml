@@ -20,5 +20,5 @@ sea-orm = { workspace = true }
 migration = { path = "../migration" }
 
 # apps
-iryx_core = { path = "../apps/iryx_core" }
-iryx_ai   = { path = "../apps/iryx_ai" }
+iryx_core = { path = "../apps/aethlen_core" }
+iryx_ai   = { path = "../apps/aethlen_ai" }
