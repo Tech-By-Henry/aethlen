@@ -30,7 +30,7 @@ pub struct Migration;
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        // ── documents ─────────────────────────────────────────────
+        // documents
         manager
             .create_table(
                 Table::create()
@@ -55,7 +55,7 @@ impl MigrationTrait for Migration {
             )
             .await?;
 
-        // ── chunks (with pgvector) ────────────────────────────────
+        // chunks (with pgvector)
         manager
             .create_table(
                 Table::create()

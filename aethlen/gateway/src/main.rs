@@ -1,48 +1,80 @@
-use axum::{Router, routing::get};
-use std::net::SocketAddr;
-use tower::ServiceBuilder;
-use tower_http::{
-    compression::CompressionLayer,
-    cors::{Any, CorsLayer},
-    trace::TraceLayer,
+use axum::{middleware, routing::get, Json, Router};
+use dotenvy::dotenv;
+use jsonwebtoken::{DecodingKey, EncodingKey};
+use sea_orm::Database;
+use std::{net::SocketAddr, sync::Arc};
+use tracing::info;
+use tracing_subscriber::EnvFilter;
+
+use aethlen_core::{
+    ensure_schema, spawn_token_janitor, AppState, JwtCfg,
+    views::user_auth::auto_refresh_layer,
 };
-use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    dotenvy::dotenv().ok();
+    // Load .env (non-fatal if missing)
+    dotenv().ok();
 
+    // Logging: JSON if JSON_LOGS=true/1/yes/on, else pretty; default level = info
+    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
     let json_logs = std::env::var("JSON_LOGS")
-        .unwrap_or_else(|_| "false".into())
-        .eq_ignore_ascii_case("true");
-    let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
+        .map(|v| {
+            let v = v.to_ascii_lowercase();
+            v == "1" || v == "true" || v == "yes" || v == "on"
+        })
+        .unwrap_or(false);
+
     if json_logs {
-        tracing_subscriber::registry().with(env_filter).with(fmt::layer().json()).init();
+        tracing_subscriber::fmt()
+            .with_env_filter(filter)
+            .json()
+            .init();
     } else {
-        tracing_subscriber::registry().with(env_filter).with(fmt::layer().without_time()).init();
+        tracing_subscriber::fmt()
+            .with_env_filter(filter)
+            .compact()
+            .init();
     }
 
-    // Base middleware stack (Django-like middlewares)
-    let cors = CorsLayer::new().allow_origin(Any).allow_methods(Any).allow_headers(Any);
-    let stack = ServiceBuilder::new()
-        .layer(TraceLayer::new_for_http())
-        .layer(cors)
-        .layer(CompressionLayer::new());
+    // Config
+    let db_url = std::env::var("DATABASE_URL")?;
+    let port: u16 = std::env::var("PORT")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(3000);
+    let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
 
-    // Mount app routers (like including app urls.py)
+    // DB + schema
+    let db = Database::connect(&db_url).await?;
+    ensure_schema(&db).await?;
+
+    // JWT cfg and keys
+    let cfg = JwtCfg::from_env();
+    let state = AppState {
+        db,
+        jwt_enc: Arc::new(EncodingKey::from_secret(jwt_secret.as_bytes())),
+        jwt_dec: Arc::new(DecodingKey::from_secret(jwt_secret.as_bytes())),
+        jwt_cfg: cfg,
+    };
+
+    // background cleanup
+    spawn_token_janitor(state.clone());
+
+    // Routes
+    let public = aethlen_core::urls::public_routes();
+    let protected = aethlen_core::urls::protected_routes()
+        .layer(middleware::from_fn_with_state(state.clone(), auto_refresh_layer));
+
     let app = Router::new()
-        .route("/", get(|| async { "aethlen gateway alive" }))
-        .nest("/api/core", aethlen_core::urls::router())
-        .nest("/api/ai",   aethlen_ai::urls::router())
-        .layer(stack);
+        .route("/healthz", get(|| async { Json(serde_json::json!({ "ok": true })) }))
+        .merge(public)
+        .merge(protected)
+        .with_state(state);
 
-    let addr: SocketAddr = std::env::var("BIND_ADDR")
-        .unwrap_or_else(|_| "0.0.0.0:8080".into())
-        .parse()?;
-    tracing::info!(%addr, "AETHLEN listening");
-
-    // Axum 0.7 style
-    let listener = tokio::net::TcpListener::bind(addr).await?;
-    axum::serve(listener, app).await?;
+    // Serve
+    let addr = SocketAddr::from(([0, 0, 0, 0], port));
+    info!("listening on http://{}", addr);
+    axum::serve(tokio::net::TcpListener::bind(addr).await?, app).await?;
     Ok(())
 }

@@ -29,4 +29,12 @@ thiserror = "1"
 sea-orm = { version = "=0.12.14", features = ["macros","runtime-tokio-rustls","sqlx-postgres","with-chrono"] }
 sea-orm-migration = { version = "=0.12.14", default-features = false, features = ["runtime-tokio-rustls","sqlx-postgres"] }
 sqlx = { version = "0.7", features = ["runtime-tokio-rustls","postgres"] }
+
+# Auth/crypto/time used by aethlen_core::views::user_auth
+argon2 = { version = "0.5", features = ["std"] }
+rand = "0.8"
+jsonwebtoken = "9"
 chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+cookie = "0.18"
+time = { version = "0.3", features = ["macros", "formatting"] }

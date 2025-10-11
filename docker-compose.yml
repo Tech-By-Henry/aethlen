@@ -1,0 +1,36 @@
+services:
+  db:
+    image: ${PG_IMAGE}
+    container_name: aethlen-pg
+    restart: unless-stopped
+    ports: ["5432:5432"]
+    environment:
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_DB: ${PG_DB}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  tei_embed_base:
+    image: ${TEI_IMAGE}
+    container_name: tei-embed-base
+    restart: unless-stopped
+    ports: ["8081:80"]
+    environment:
+      MODEL_ID: ${TEI_MODEL_BASE}
+
+  tei_embed_small:
+    image: ${TEI_IMAGE}
+    container_name: tei-embed-small
+    restart: unless-stopped
+    ports: ["8082:80"]
+    environment:
+      MODEL_ID: ${TEI_MODEL_SMALL}
+
+volumes:
+  pgdata:

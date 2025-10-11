@@ -1,8 +1,18 @@
-use axum::{Router, routing::{get, post}};
-use crate::views::{aethlen_health::health, aethlen_echo::echo};
+use axum::{routing::{get, post}, Router};
 
-pub fn router() -> Router {
+use crate::{views::user_auth, AppState};
+
+/// Routes that do NOT require auth (no middleware)
+pub fn public_routes() -> Router<AppState> {
     Router::new()
-        .route("/health", get(health))
-        .route("/echo",   post(echo))
+        .route("/auth/signup",  post(user_auth::signup))
+        .route("/auth/login",   post(user_auth::login))
+        .route("/auth/refresh", post(user_auth::refresh))
+        .route("/auth/logout",  post(user_auth::logout))
+}
+
+/// Routes that DO require auth (middleware will be applied by the gateway)
+pub fn protected_routes() -> Router<AppState> {
+    Router::new()
+        .route("/auth/me", get(user_auth::me))
 }
