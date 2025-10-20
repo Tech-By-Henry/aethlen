@@ -1,8 +1,6 @@
 [workspace]
 members = [
   "gateway",
-  "apps/aethlen_core",
-  "apps/aethlen_ai",
   "migration",
 ]
 resolver = "2"
@@ -25,12 +23,12 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt", "json"]
 anyhow = "1"
 thiserror = "1"
 
-# Database (pinned to avoid CLI bug; and disable default features on migration)
+# Database (keep for migration crate)
 sea-orm = { version = "=0.12.14", features = ["macros","runtime-tokio-rustls","sqlx-postgres","with-chrono"] }
 sea-orm-migration = { version = "=0.12.14", default-features = false, features = ["runtime-tokio-rustls","sqlx-postgres"] }
 sqlx = { version = "0.7", features = ["runtime-tokio-rustls","postgres"] }
 
-# Auth/crypto/time used by aethlen_core::views::user_auth
+# (OK to keep parked; not used now)
 argon2 = { version = "0.5", features = ["std"] }
 rand = "0.8"
 jsonwebtoken = "9"

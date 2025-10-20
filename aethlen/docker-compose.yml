@@ -1,0 +1,144 @@
+name: ai-project
+
+services:
+  db:
+    image: ${PG_IMAGE}
+    container_name: aethlen-pg
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${PG_PORT}:5432"
+    environment:
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_DB: ${PG_DB}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - pgdata_aethlen:/var/lib/postgresql/data
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${OLLAMA_PORT}:11434"
+    environment:
+      OLLAMA_HOST: 0.0.0.0
+    volumes:
+      # Use the REAL external volume that contains your models
+      - ollama:/root/.ollama
+
+  tei-embed-base:
+    image: ${TEI_IMAGE}
+    container_name: tei-embed-base
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8081:80"
+    environment:
+      MODEL_ID: ${TEI_MODEL_BASE}
+    volumes:
+      - tei_base_cache:/data
+
+  tei-embed-small:
+    image: ${TEI_IMAGE}
+    container_name: tei-embed-small
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8082:80"
+    environment:
+      MODEL_ID: ${TEI_MODEL_SMALL}
+    volumes:
+      - tei_small_cache:/data
+
+  tei-reranker:
+    image: ${TEI_IMAGE}
+    container_name: tei-reranker
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8083:80"
+    environment:
+      MODEL_ID: ${TEI_RERANK_MODEL}
+    volumes:
+      - tei_rerank_cache:/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+    ports:
+      - "127.0.0.1:6380:6379"
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9000:9000"   # Console (Web UI)
+      - "127.0.0.1:9005:9005"   # S3 API
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    command: server /data --console-address ":9000" --address ":9005"
+    volumes:
+      - minio_data:/data
+
+  paddle-ocr:
+    image: blazordevlab/paddleocrapi:latest
+    container_name: paddle-ocr
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${PADDLE_OCR_PORT}:8000"
+
+  # Piper (TTS over Wyoming TCP)
+  piper:
+    image: rhasspy/wyoming-piper:latest
+    container_name: piper
+    restart: unless-stopped
+    entrypoint: ["python3","-m","wyoming_piper"]   # <- remove this line
+    command:
+      [
+      "--voice","${PIPER_VOICE}",
+      "--data-dir","/data",
+      "--download-dir","/data",
+      "--uri","tcp://0.0.0.0:${PIPER_PORT}",
+      "--update-voices"
+      ]
+    ports:
+    - "127.0.0.1:${PIPER_PORT}:${PIPER_PORT}"
+    volumes:
+    - piper_voices:/data
+
+  # Build later if needed
+  argos:
+    build: ./argos-server
+    container_name: argos
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9010:8000"
+    environment:
+      ARGOS_PACKAGES_DIR: /root/.local/share/argos-translate/packages
+    volumes:
+      - lt_models:/root/.local/share/argos-translate/packages
+
+volumes:
+  pgdata_aethlen:
+  tei_base_cache:
+  tei_small_cache:
+  tei_rerank_cache:
+  minio_data:
+
+  # external volumes that already exist on your host
+  ollama:
+    external: true
+    name: ollama
+
+  piper_voices:
+    external: true
+    name: piper_voices
+
+  lt_models:
+    external: true

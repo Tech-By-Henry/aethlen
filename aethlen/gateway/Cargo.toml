@@ -4,27 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-# Web
 axum = { workspace = true }
 tokio = { workspace = true }
-tower = { workspace = true }
-tower-http = { workspace = true }
-
-# Config / Logs / Errors
-serde = { workspace = true }
-serde_json = { workspace = true }
 dotenvy = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
 anyhow = { workspace = true }
-
-# DB / migrations
-sea-orm = { workspace = true }
-migration = { path = "../migration" }
-
-# app crates
-aethlen_core = { path = "../apps/aethlen_core" }
-aethlen_ai   = { path = "../apps/aethlen_ai" }
-
-# 🔧 add this so `use jsonwebtoken::{DecodingKey, EncodingKey};` resolves
-jsonwebtoken = { workspace = true }

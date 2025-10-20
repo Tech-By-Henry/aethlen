@@ -1,80 +1,69 @@
-use axum::{middleware, routing::get, Json, Router};
+use axum::{
+    extract::DefaultBodyLimit,
+    routing::{get, post},
+    Json, Router,
+};
 use dotenvy::dotenv;
-use jsonwebtoken::{DecodingKey, EncodingKey};
-use sea_orm::Database;
-use std::{net::SocketAddr, sync::Arc};
+use serde::{Deserialize, Serialize};
+use std::net::SocketAddr;
 use tracing::info;
 use tracing_subscriber::EnvFilter;
 
-use aethlen_core::{
-    ensure_schema, spawn_token_janitor, AppState, JwtCfg,
-    views::user_auth::auto_refresh_layer,
-};
+#[derive(Serialize)]
+struct Health { ok: bool, service: &'static str }
+
+#[derive(Deserialize)]
+struct ChatReq {
+    messages: serde_json::Value,
+    system_profile: Option<String>,
+    stream: Option<bool>,
+    max_tokens: Option<u32>,
+    temperature: Option<f32>,
+}
+
+#[derive(Serialize)]
+struct ChatResp {
+    text: String,
+    model: &'static str,
+    usage: serde_json::Value,
+}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // Load .env (non-fatal if missing)
     dotenv().ok();
 
-    // Logging: JSON if JSON_LOGS=true/1/yes/on, else pretty; default level = info
     let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
-    let json_logs = std::env::var("JSON_LOGS")
-        .map(|v| {
-            let v = v.to_ascii_lowercase();
-            v == "1" || v == "true" || v == "yes" || v == "on"
-        })
-        .unwrap_or(false);
+    tracing_subscriber::fmt().with_env_filter(filter).compact().init();
 
-    if json_logs {
-        tracing_subscriber::fmt()
-            .with_env_filter(filter)
-            .json()
-            .init();
-    } else {
-        tracing_subscriber::fmt()
-            .with_env_filter(filter)
-            .compact()
-            .init();
-    }
-
-    // Config
-    let db_url = std::env::var("DATABASE_URL")?;
-    let port: u16 = std::env::var("PORT")
-        .ok()
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(3000);
-    let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
-
-    // DB + schema
-    let db = Database::connect(&db_url).await?;
-    ensure_schema(&db).await?;
-
-    // JWT cfg and keys
-    let cfg = JwtCfg::from_env();
-    let state = AppState {
-        db,
-        jwt_enc: Arc::new(EncodingKey::from_secret(jwt_secret.as_bytes())),
-        jwt_dec: Arc::new(DecodingKey::from_secret(jwt_secret.as_bytes())),
-        jwt_cfg: cfg,
-    };
-
-    // background cleanup
-    spawn_token_janitor(state.clone());
-
-    // Routes
-    let public = aethlen_core::urls::public_routes();
-    let protected = aethlen_core::urls::protected_routes()
-        .layer(middleware::from_fn_with_state(state.clone(), auto_refresh_layer));
+    let port: u16 = std::env::var("PORT").ok().and_then(|s| s.parse().ok()).unwrap_or(3000);
 
     let app = Router::new()
-        .route("/healthz", get(|| async { Json(serde_json::json!({ "ok": true })) }))
-        .merge(public)
-        .merge(protected)
-        .with_state(state);
+        .route("/healthz", get(|| async { Json(Health { ok: true, service: "aethlen-ai-core" }) }))
+        .route("/v1/chat", post(chat_stub))
+        .route("/v1/vision-chat", post(not_implemented))
+        .route("/v1/stt", post(not_implemented))
+        .route("/v1/tts", post(not_implemented))
+        .route("/v1/ocr", post(not_implemented))
+        .route("/v1/embeddings", post(not_implemented))
+        .layer(DefaultBodyLimit::max(25 * 1024 * 1024));
 
-    // Serve
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     info!("listening on http://{}", addr);
     axum::serve(tokio::net::TcpListener::bind(addr).await?, app).await?;
     Ok(())
+}
+
+async fn chat_stub(Json(_req): Json<ChatReq>) -> Json<ChatResp> {
+    Json(ChatResp {
+        text: "Hi! I’m Aethlen. The AI engine is stubbed here — wiring providers is next.".into(),
+        model: "stub",
+        usage: serde_json::json!({"in_tokens": 0, "out_tokens": 0}),
+    })
+}
+
+async fn not_implemented() -> (axum::http::StatusCode, Json<serde_json::Value>) {
+    (axum::http::StatusCode::NOT_IMPLEMENTED, Json(serde_json::json!({
+        "error": "not_implemented",
+        "message": "Endpoint is stubbed. AI providers will be wired next."
+    })))
 }
