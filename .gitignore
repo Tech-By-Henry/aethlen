@@ -1,16 +1,33 @@
-# Rust
-/target
-**/target/
+/target/
+/**/target/
+/**/.cargo/
+**/__pycache__/
+**/*.pyc
+/.venv/
+/venv/
 
-# Editors/OS
-.vscode/
-.idea/
-.DS_Store
+/models/
+/**/models/
+artifacts/
+datasets/
+uploads/
+media/
 
-# Dotenv
+**/*.onnx
+**/*.pt
+**/*.bin
+**/*.ckpt
+**/*.safetensors
+**/*.zip
+**/*.tar
+**/*.tar.gz
+**/*.mp3
+**/*.wav
+
+out.wav
+docker-inventory-*.txt
 .env
 .env.*
-!.env.example
-**/.env
-**/.env.*
-!**/.env.example
+.DS_Store
+.idea/
+.vscode/
