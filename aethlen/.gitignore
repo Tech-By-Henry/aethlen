@@ -1,0 +1,38 @@
+# Rust
+/target/
+/**/target/
+/**/.cargo/
+
+# Python
+/argos-server/__pycache__/
+/**/*.pyc
+/.venv/
+/venv/
+
+# Binary assets & media
+/models/
+/**/models/
+artifacts/
+datasets/
+uploads/
+media/
+out.wav
+**/*.onnx
+**/*.pt
+**/*.bin
+**/*.ckpt
+**/*.safetensors
+**/*.zip
+**/*.tar
+**/*.tar.gz
+**/*.mp3
+**/*.wav
+
+# Local junk & secrets
+*.log
+docker-inventory-*.txt
+.env
+.env.*
+.DS_Store
+.idea/
+.vscode/
