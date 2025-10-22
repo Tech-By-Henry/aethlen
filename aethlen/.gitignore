@@ -1,15 +1,10 @@
-# Rust
 /target/
 /**/target/
 /**/.cargo/
-
-# Python
-/argos-server/__pycache__/
-/**/*.pyc
+arg​os-server/__pycache__/
+**/*.pyc
 /.venv/
 /venv/
-
-# Binary assets & media
 /models/
 /**/models/
 artifacts/
@@ -27,8 +22,6 @@ out.wav
 **/*.tar.gz
 **/*.mp3
 **/*.wav
-
-# Local junk & secrets
 *.log
 docker-inventory-*.txt
 .env
